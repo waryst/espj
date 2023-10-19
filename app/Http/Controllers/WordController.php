@@ -2,94 +2,98 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Spt;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpWord\Style\Border;
 use PhpOffice\PhpWord\Style\Table;
 
 class WordController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, Spt $data)
     {
-        $nama = $request->nama;
-
-
-
-        // $my_template = new \PhpOffice\PhpWord\TemplateProcessor('template.docx');
-
-        // $table = new \PhpOffice\PhpWord\Element\Table();
-
-        // $myFontStyle = array('name' => 'Minion Pro', 'size' => 10, 'bold' => true);
-        // $myParagraphStyle = array('align' => 'center', 'spaceBefore' => 50, 'spaceafter' => 50);
-
-        // $table->addRow();
-        // $table->addCell()->addText('Cell 1', $myFontStyle, $myParagraphStyle);
-        // $table->addCell()->addText('Cell 2', $myFontStyle, $myParagraphStyle);
-        // $table->addCell()->addText('Cell 3', $myFontStyle, $myParagraphStyle);
-        // $my_template->setComplexBlock('table', $table);
-        // $my_template->saveAs('Hasil.docx');
-
-        // $phpWord = new \PhpOffice\PhpWord\TemplateProcessor('template.docx');
-        // $phpWord->setValues(['nama' => $nama]);
-        // $phpWord->saveAs('Hasil.docx');
+        $pegawaispts = Spt::with(['pegawaispt', 'penandatanganspt.pegawai'])->where('id', $data->id)->first();
 
         $template = new \PhpOffice\PhpWord\TemplateProcessor('template.docx');
         $table = new \PhpOffice\PhpWord\Element\Table();
         $phpWord = new \PhpOffice\PhpWord\PhpWord();
         $section = $phpWord->addSection();
-        // 1. Basic table
-        // $section->addText(htmlspecialchars('Fancy table'), $header);
-
-        // $styleTable = array('borderSize' => 3, 'borderColor' => '000000', 'spaceAfter' => 0, 'spaceBefore' => 0, 'spacing' => 0, 'cellMargin' => 0, 'lineHeight' => 2.0);
-        // $styleCell = array('valign' => 'center', 'align' => 'center');
         $fontStyle = array('name' => 'Times New Roman', 'size' => 12);
         $table = $section->addTable('Fancy Table');
         $noSpace = array('spaceAfter' => 50, 'spaceBefore' => 50);
-        for ($x = 1; $x <= 3; $x++) {
+        $no_urut = 1;
+        foreach ($pegawaispts->pegawaispt as $pegawaispt) {
             $table->addRow();
-            $table->addCell(500)->addText(htmlspecialchars("{$x}"), $fontStyle, $noSpace);
+            $table->addCell(500)->addText(htmlspecialchars($no_urut), $fontStyle, $noSpace);
             $table->addCell(3000)->addText(htmlspecialchars('Nama'), $fontStyle, $noSpace);
             $table->addCell(300)->addText(htmlspecialchars(':'), $fontStyle, $noSpace);
-            $table->addCell(4000)->addText(htmlspecialchars('Warist Amru Khoiruddin,S.ST'), $fontStyle, $noSpace);
-            for ($i = 1; $i <= 4; $i++) {
-                $table->addRow();
-                if ($i == 1) {
-                    $table->addCell()->addText(htmlspecialchars(""), $fontStyle, $noSpace);
-                    $table->addCell()->addText(htmlspecialchars("NIP"), $fontStyle, $noSpace);
-                    $table->addCell()->addText(htmlspecialchars(":"), $fontStyle, $noSpace);
-                    $table->addCell()->addText(htmlspecialchars("19860408 202012 1 003"), $fontStyle, $noSpace);
-                }
-                if ($i == 2) {
-                    $table->addCell()->addText(htmlspecialchars(""), $fontStyle, $noSpace);
-                    $table->addCell()->addText(htmlspecialchars("Pangkat/Golongan Ruang"), $fontStyle, $noSpace);
-                    $table->addCell()->addText(htmlspecialchars(":"), $fontStyle, $noSpace);
-                    $table->addCell()->addText(htmlspecialchars("Pengatur (II/C"), $fontStyle, $noSpace);
-                }
-                if ($i == 3) {
-                    $table->addCell()->addText(htmlspecialchars(""), $fontStyle, $noSpace);
-                    $table->addCell()->addText(htmlspecialchars("Jabatan"), $fontStyle, $noSpace);
-                    $table->addCell()->addText(htmlspecialchars(":"), $fontStyle, $noSpace);
-                    $table->addCell()->addText(htmlspecialchars("Pranata Komputer Terampil"), $fontStyle, $noSpace);
-                }
-                if ($i == 4) {
-                    $table->addCell()->addText(htmlspecialchars(""), $fontStyle, ['spaceAfter' => 0, 'spaceBefore' => 0]);
-                    $table->addCell()->addText(htmlspecialchars(""), $fontStyle, ['spaceAfter' => 0, 'spaceBefore' => 0]);
-                    $table->addCell()->addText(htmlspecialchars(""), $fontStyle, ['spaceAfter' => 0, 'spaceBefore' => 0]);
-                    $table->addCell()->addText(htmlspecialchars(""), $fontStyle, ['spaceAfter' => 0, 'spaceBefore' => 0]);
-                }
+            if ($pegawaispt->pegawai->gelar_depan != null) {
+                $table->addCell(5000)->addText(htmlspecialchars($pegawaispt->pegawai->gelar_depan . " " . strtoupper($pegawaispt->pegawai->nama) . " " . $pegawaispt->pegawai->gelar_belakang), $fontStyle, $noSpace);
+            } else {
+
+                $table->addCell(5000)->addText(htmlspecialchars(strtoupper($pegawaispt->pegawai->nama) . " " . $pegawaispt->pegawai->gelar_belakang), $fontStyle, $noSpace);
             }
+            $table->addRow();
+            $table->addCell()->addText(htmlspecialchars(""), $fontStyle, $noSpace);
+            $table->addCell()->addText(htmlspecialchars("NIP"), $fontStyle, $noSpace);
+            $table->addCell()->addText(htmlspecialchars(":"), $fontStyle, $noSpace);
+            $table->addCell()->addText(htmlspecialchars($pegawaispt->pegawai->nip), $fontStyle, $noSpace);
+
+            $table->addRow();
+            $table->addCell()->addText(htmlspecialchars(""), $fontStyle, $noSpace);
+            $table->addCell()->addText(htmlspecialchars("Pangkat/Golongan Ruang"), $fontStyle, $noSpace);
+            $table->addCell()->addText(htmlspecialchars(":"), $fontStyle, $noSpace);
+            $table->addCell()->addText(htmlspecialchars($pegawaispt->pegawai->pangkat . " (" . $pegawaispt->pegawai->gol . "/" . $pegawaispt->pegawai->ruang . ")"), $fontStyle, $noSpace);
+
+            $table->addRow();
+            $table->addCell()->addText(htmlspecialchars(""), $fontStyle, $noSpace);
+            $table->addCell()->addText(htmlspecialchars("Jabatan"), $fontStyle, $noSpace);
+            $table->addCell()->addText(htmlspecialchars(":"), $fontStyle, $noSpace);
+            $table->addCell()->addText(htmlspecialchars($pegawaispt->pegawai->jabatan), $fontStyle, $noSpace);
+            $no_urut++;
         }
-
-
-
-
 
         $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord);
         $fullxml = $objWriter->getWriterPart('Document')->write($table);;
         $tablexml = preg_replace('/^[\s\S]*(<w:tbl\b.*<\/w:tbl>).*/', '$1', $fullxml);
 
         $template->setValue('table', $tablexml);
-        $template->setValues(['nama' => $nama]);
-        $template->saveAs('Hasil.docx');
-        // $phpWord->save('Hasil.docx');
+
+        if ($data->pulang == $data->berangkat) {
+            $template->setValues([
+                'kegiatan' => $data->judul . " pada tanggal " . Carbon::parse($data->berangkat)->isoFormat('D MMMM Y'),
+            ]);
+        } else {
+            $template->setValues([
+                'kegiatan' => $data->judul . " pada tanggal " . Carbon::parse($data->berangkat)->isoFormat('D MMMM Y') . " s.d. " . Carbon::parse($data->pulang)->isoFormat('D MMMM Y'),
+            ]);
+        }
+        $template->setValues([
+            'nomor' => $data->no_surat,
+            'tgl_spt' => Carbon::parse($data->tgl)->isoFormat('D MMMM Y'),
+        ]);
+
+        if ($pegawaispts->penandatanganspt->jabatan == 'Kepala Dinas') {
+            $template->setValues([
+                'an' => '',
+                'ttd_nama' => $pegawaispts->penandatanganspt->pegawai->gelar_depan . " " . strtoupper($pegawaispts->penandatanganspt->pegawai->nama . " " . $pegawaispts->penandatanganspt->pegawai->gelar_belakang),
+                'ttd_pangkat' => $pegawaispts->penandatanganspt->pegawai->pangkat,
+                'ttd_nip' => $pegawaispts->penandatanganspt->pegawai->nip,
+                'ttd_jabatan' => ''
+            ]);
+        } else {
+            $template->setValues([
+                'an' => 'a.n. ',
+                'ttd_nama' => $pegawaispts->penandatanganspt->pegawai->gelar_depan . " " . strtoupper($pegawaispts->penandatanganspt->pegawai->nama . " " . $pegawaispts->penandatanganspt->pegawai->gelar_belakang),
+                'ttd_pangkat' => $pegawaispts->penandatanganspt->pegawai->pangkat,
+                'ttd_nip' => $pegawaispts->penandatanganspt->pegawai->nip,
+                'ttd_jabatan' => ucfirst(strtolower($pegawaispts->penandatanganspt->jabatan))
+            ]);
+        }
+
+        $path = Storage::path('data/spt/hasil.docx');
+        $template->saveAs($path);
+        return response()->json(['download' => url('download')]);
     }
 }
