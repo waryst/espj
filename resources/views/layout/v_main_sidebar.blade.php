@@ -1,7 +1,7 @@
 <aside class="main-sidebar elevation-4 sidebar-light-lightblue">
     <!-- Brand Logo -->
     <a href="#" class="brand-link bg-lightblue">
-        <img src="{{ asset('asset_login') }}/images/l.png" alt="" class="brand-image" style="opacity: 1">
+        {{-- <img src="{{ asset('asset_login') }}/images/l.png" alt="" class="brand-image" style="opacity: 1"> --}}
         <span class="brand-text text-light font-weight-bolt ">Ponorogo Hebat</span>
     </a>
 

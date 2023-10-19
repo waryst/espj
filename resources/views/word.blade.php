@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <form action="{{ route('word.index') }}" method="post">
+    <form action="{{ url('word') }}" method="post">
         @csrf
         <input type="text" name="nama">
         <input type="submit" value="Submit">
